@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 
-	pb "github.com/smallnest/grpc-examples/auth/pb"
+	pb "grpc-examples/auth/pb"
 	"google.golang.org/grpc"
 )
 

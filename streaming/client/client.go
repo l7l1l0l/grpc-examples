@@ -8,7 +8,7 @@ import (
 	"log"
 	"strconv"
 
-	pb "github.com/smallnest/grpc-examples/streaming/pb"
+	pb "grpc-examples/streaming/pb"
 	"google.golang.org/grpc"
 )
 

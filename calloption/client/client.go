@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 
-	pb "github.com/smallnest/grpc-examples/calloption/pb"
+	pb "grpc-examples/calloption/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 )
@@ -39,5 +39,4 @@ func main() {
 	}
 	log.Printf("Greeting: %s", r.Message)
 	log.Printf("peer: %+v", p)
-
 }

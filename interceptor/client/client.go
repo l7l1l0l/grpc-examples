@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	pb "github.com/smallnest/grpc-examples/interceptor/pb"
+	pb "grpc-examples/interceptor/pb"
 	"google.golang.org/grpc"
 )
 
