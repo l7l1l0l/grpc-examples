@@ -1,7 +1,11 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"google.golang.org/grpc/credentials"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"strconv"
@@ -9,9 +13,9 @@ import (
 
 	"flag"
 
-	pb "grpc-examples/streaming/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	pb "grpc-examples/streaming/pb"
 )
 
 var (
@@ -65,12 +69,32 @@ func (s *server) SayHello3(gs pb.Greeter_SayHello3Server) error {
 
 func main() {
 	flag.Parse()
+	cert, err := tls.LoadX509KeyPair("./conf/server.pem", "./conf/server.key")
+	if err != nil {
+		log.Fatalf("tls.LoadX509KeyPair err: %v", err)
+	}
+
+	certPool := x509.NewCertPool()
+	ca, err := ioutil.ReadFile("../conf/ca.pem")
+	if err != nil {
+		log.Fatalf("ioutil.ReadFile err: %v", err)
+	}
+
+	if ok := certPool.AppendCertsFromPEM(ca); !ok {
+		log.Fatalf("certPool.AppendCertsFromPEM err")
+	}
+
+	c := credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{cert},
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+		ClientCAs:    certPool,
+	})
 
 	lis, err := net.Listen("tcp", *port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.Creds(c))
 	pb.RegisterGreeterServer(s, &server{})
 
 	reflection.Register(s)

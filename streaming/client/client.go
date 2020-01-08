@@ -2,14 +2,18 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"flag"
 	"fmt"
+	"google.golang.org/grpc/credentials"
 	"io"
+	"io/ioutil"
 	"log"
 	"strconv"
 
-	pb "grpc-examples/streaming/pb"
 	"google.golang.org/grpc"
+	pb "grpc-examples/streaming/pb"
 )
 
 var (
@@ -20,28 +24,46 @@ var (
 
 func main() {
 	flag.Parse()
+	cert, err := tls.LoadX509KeyPair("./conf/client.pem", "./conf/client.key")
+	if err != nil {
+		log.Fatalf("tls.LoadX509KeyPair err: %v", err)
+	}
 
+	certPool := x509.NewCertPool()
+	ca, err := ioutil.ReadFile("../conf/ca.pem")
+	if err != nil {
+		log.Fatalf("ioutil.ReadFile err: %v", err)
+	}
+
+	if ok := certPool.AppendCertsFromPEM(ca); !ok {
+		log.Fatalf("certPool.AppendCertsFromPEM err")
+	}
+
+	c := credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{cert},
+		ServerName:   "go-grpc-example",
+		RootCAs:      certPool,
+	})
 	// 连接服务器
-	conn, err := grpc.Dial(*address, grpc.WithInsecure())
+	conn, err := grpc.Dial(*address, grpc.WithTransportCredentials(c))
 	if err != nil {
 		log.Fatalf("faild to connect: %v", err)
 	}
 	defer conn.Close()
 
-	c := pb.NewGreeterClient(conn)
+	client := pb.NewGreeterClient(conn)
 
 	switch *example {
 	case 0:
 		log.Println("Test Reply streaming")
-		sayHello1(c)
+		sayHello1(client)
 	case 1:
 		log.Println("\n\n\nTest Request streaming")
-		sayHello2(c)
+		sayHello2(client)
 	case 2:
 		log.Println("\n\n\nTest Bidirectional streaming")
-		sayHello3(c)
+		sayHello3(client)
 	}
-
 }
 
 func sayHello1(c pb.GreeterClient) {
