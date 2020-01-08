@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"google.golang.org/grpc/credentials"
 	"log"
 
-	pb "grpc-examples/helloworld/pb"
 	"google.golang.org/grpc"
+	pb "grpc-examples/helloworld/pb"
 )
 
 var (
@@ -16,17 +17,21 @@ var (
 
 func main() {
 	flag.Parse()
+	c, err := credentials.NewClientTLSFromFile("../conf/server.pem", "luojie")
+	if err != nil {
+		log.Fatalf("credentials.NewClientTLSFromFile err: %v", err)
+	}
 
 	// 连接服务器
-	conn, err := grpc.Dial(*address, grpc.WithInsecure())
+	conn, err := grpc.Dial(*address, grpc.WithTransportCredentials(c))
 	if err != nil {
 		log.Fatalf("faild to connect: %v", err)
 	}
 	defer conn.Close()
 
-	c := pb.NewGreeterClient(conn)
+	client := pb.NewGreeterClient(conn)
 
-	r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: *name})
+	r, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: *name})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}

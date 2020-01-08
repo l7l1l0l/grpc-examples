@@ -1,6 +1,7 @@
 package main
 
 import (
+	"google.golang.org/grpc/credentials"
 	"log"
 	"net"
 
@@ -29,7 +30,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
+
+	c, err := credentials.NewServerTLSFromFile("../conf/server.pem", "../conf/server.key")
+	if err != nil {
+		log.Fatalf("credentials.NewServerTLSFromFile err: %v", err)
+	}
+	s := grpc.NewServer(grpc.Creds(c))
 	pb.RegisterGreeterServer(s, &server{})
 
 	reflection.Register(s)
